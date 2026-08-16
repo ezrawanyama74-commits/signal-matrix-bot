@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cash Engine MiniApp Wallet</title>
+    <script src="https://telegram.org"></script>
+    <style>
+        :root { --bg-color: #0e1621; --card-bg: #17212b; --text-color: #fff; --primary: #2481cc; --success: #27ae60; --danger: #e74c3c; }
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg-color); color: var(--text-color); margin: 0; padding: 15px; box-sizing: border-box; }
+        .header { display: flex; justify-content: space-between; align-items: center; position: relative; margin-bottom: 10px; }
+        .secret-trigger { width: 45px; height: 45px; opacity: 0.0; cursor: pointer; position: absolute; right: 0; top: 0; z-index: 999; user-select: none; }
+        .card { background: linear-gradient(135deg, #1c92d2, #f2fcfe); color: #000; border-radius: 15px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); text-align: left; position: relative; }
+        .balance-title { font-size: 13px; opacity: 0.8; font-weight: bold; letter-spacing: 0.5px; }
+        .balance-value { font-size: 34px; font-weight: bold; margin-top: 5px; }
+        .section-title { text-align: left; font-size: 18px; font-weight: bold; margin: 20px 0 10px 0; color: #3498db; display: flex; align-items: center; justify-content: space-between; }
+        .btn { display: block; width: 100%; padding: 12px; background: var(--primary); border: none; color: #fff; border-radius: 10px; font-weight: bold; font-size: 16px; cursor: pointer; text-decoration: none; margin-top: 10px; box-sizing: border-box; text-align: center; }
+        .task-card { background: var(--card-bg); padding: 15px; border-radius: 10px; margin-bottom: 10px; text-align: left; border: 1px solid #242f3d; position: relative; }
+        input { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #242f3d; background: var(--bg-color); color: #fff; box-sizing: border-box; font-size: 16px; margin-top: 5px; margin-bottom: 10px; }
+        .progress-bar-bg { width: 100%; background: #242f3d; height: 8px; border-radius: 4px; margin-top: 10px; display: none; overflow: hidden; }
+        .progress-bar-fill { background: var(--primary); width: 0%; height: 100%; transition: width 1s linear; }
+        .ledger-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #242f3d; font-size: 14px; }
+        .status-pill { padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
+        .status-success { background: rgba(39,174,96,0.2); color: var(--success); }
+        .status-failed { background: rgba(231,76,60,0.2); color: var(--danger); }
+        .admin-view { display: none; background: var(--bg-color); padding: 5px; border-radius: 10px; text-align: left; }
+        .hidden-dialog { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--card-bg); border: 2px solid var(--primary); padding: 20px; border-radius: 15px; z-index: 10000; box-shadow: 0 0 20px rgba(0,0,0,0.8); width: 85%; max-width: 320px; }
+        .admin-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+        .admin-table th, .admin-table td { padding: 8px; text-align: left; border-bottom: 1px solid #242f3d; }
+        .admin-table th { color: #3498db; }
+        .pulse { display: inline-block; width: 8px; height: 8px; background: var(--success); border-radius: 50%; margin-right: 5px; box-shadow: 0 0 8px var(--success); }
+    </style>
+</head>
+<body>
+    <div id="user-app-view">
+        <div class="header">
+            <div style="font-size:14px;color:#aaa;"><span class="pulse"></span>LIVE WALLET CHANNEL</div>
+            <div class="secret-trigger" onclick="handleSecretTap()">🫥</div>
+        </div>
+        <div class="card">
+            <div class="balance-title">CURRENT BALANCE</div>
+            <div id="balance" class="balance-value">KSh 0.00</div>
+            <div style="font-size:12px;opacity:0.7;margin-top:4px;font-weight:500;" id="usd-balance">~ $0.00 USDT</div>
+            <div style="font-size:11px;opacity:0.5;margin-top:8px;" id="username">Linking secure profile...</div>
+        </div>
+        <div class="section-title">📺 Active Video View Tasks</div>
+        <div id="video-container"></div>
+        <div class="section-title">🛍️ Shopping Cashback Deals</div>
+        <div class="task-card">
+            <div style="font-weight:bold;font-size:15px;">Incentivized Cashback Hub</div>
+            <div style="font-size:13px;color:#aaa;margin:6px 0;" id="aff-reward">Earn guaranteed credits on checking verified store listings.</div>
+            <a id="aff-link" class="btn" style="background:var(--success);" target="_blank">Shop Exclusive Partner Deals</a>
+        </div>
+        <div class="section-title">💸 Direct Payout Settlements</div>
+        <div class="task-card">
+            <label style="font-size:12px;color:#aaa;font-weight:bold;">MINIPAY RECIPIENT PHONE NUMBER</label>
+            <input type="tel" id="phone-input" placeholder="e.g. 0702326612">
+            <button class="btn" style="background:var(--danger);margin-top:5px;" onclick="requestWithdrawal()">Extract Earnings to MiniPay</button>
+        </div>
+        <div class="section-title">🗒️ My Activity Ledger</div>
+        <div class="task-card" id="ledger-container" style="max-height:200px;overflow-y:auto;padding:10px 15px;"></div>
+    </div>
+    <div id="admin-app-view" class="admin-view">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;border-bottom:2px solid #242f3d;padding-bottom:10px;">
+            <div style="font-size:20px;font-weight:bold;color:#3498db;">🛠️ OWNER CONTROL HUB</div>
+            <button class="btn" style="width:auto;padding:6px 12px;background:var(--danger);margin-top:0;" onclick="exitAdmin()">Exit Panel</button>
+        </div>
+        <div class="task-card">
+            <div style="font-weight:bold;margin-bottom:8px;color:#3498db;">➕ Create Video Campaign</div>
+            <input type="text" id="adm-v-url" placeholder="Paste Video URL">
+            <input type="number" id="adm-v-views" placeholder="Target views limit">
+            <input type="number" id="adm-v-time" placeholder="Watch time in seconds">
+            <button class="btn" onclick="adminAddVideo()">Publish Campaign</button>
+        </div>
+        <div class="task-card">
+            <div style="font-weight:bold;margin-bottom:8px;color:#3498db;">🛍️ Configure Affiliate Link</div>
+            <input type="text" id="adm-a-url" placeholder="Paste tracking URL">
+            <input type="number" id="adm-a-reward" placeholder="Cashback reward in KSh">
+            <button class="btn" style="background:var(--success);" onclick="adminAddAffiliate()">Update Link</button>
+        </div>
+        <div class="section-title">📊 Active Campaigns</div>
+        <div style="overflow-x:auto;"><table class="admin-table" id="adm-campaigns-table"><thead><tr><th>ID</th><th>URL</th><th>Views</th><th>Timer</th><th>Action</th></tr></thead><tbody></tbody></table></div>
+        <div class="section-title">📋 Sunday Payout Sheet</div>
+        <div style="overflow-x:auto;"><table class="admin-table" id="adm-payouts-table"><thead><tr><th>User</th><th>Contact</th><th>Owed</th><th>Settlement</th></tr></thead><tbody></tbody></table></div>
+    </div>
+    <div id="secret-auth-dialog" class="hidden-dialog">
+        <div style="font-weight:bold;font-size:16px;margin-bottom:10px;color:#3498db;text-align:center;">🔒 VERIFICATION REQUIRED</div>
+        <input type="password" id="secret-key-input" placeholder="Enter Password">
+        <div style="display:flex;gap:10px;"><button class="btn" style="background:#7f8c8d;margin-top:0;" onclick="closeSecretDialog()">Cancel</button><button class="btn" style="margin-top:0;" onclick="submitSecretKey()">Unlock</button></div>
+    </div>
+    <script>
+        const tg = window.Telegram.WebApp; tg.expand(); const uid = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : 12345; const API_BASE = window.location.origin; let tapCount = 0, tapTimer = null, activeTimers = {};
+        function handleSecretTap() { tapCount++; clearTimeout(tapTimer); if (tapCount === 4) { tapCount = 0; document.getElementById('secret-auth-dialog').style.display = 'block'; document.getElementById('secret-key-input').focus(); } else { tapTimer = setTimeout(() => { tapCount = 0; }, 2000); } }
+        function closeSecretDialog() { document.getElementById('secret-auth-dialog').style.display = 'none'; document.getElementById('secret-key-input').value = ''; }
+        function submitSecretKey() { if (document.getElementById('secret-key-input').value === "Money") { closeSecretDialog(); document.getElementById('user-app-view').style.display = 'none'; document.getElementById('admin-app-view').style.display = 'block'; loadAdminDashboard(); } else { alert("❌ Wrong Password."); closeSecretDialog(); } }
+        function exitAdmin() { document.getElementById('admin-app-view').style.display = 'none'; document.getElementById('user-app-view').style.display = 'block'; loadDashboard(); }
+        async function loadDashboard() {
+            try {
+                let pRes = await fetch(`${API_BASE}/api/user/${uid}`), pData = await pRes.json();
+                document.getElementById('balance').innerText = `KSh ${pData.balance.toFixed(2)}`;
+                document.getElementById('usd-balance').innerText = `~ $${(pData.balance / 129.50).toFixed(2)} USDT`;
+                document.getElementById('phone-input').value = pData.phone || '';
+                document.getElementById('username').innerText = `Session Account: @${pData.username || 'User'}`;
+                let tRes = await fetch(`${API_BASE}/api/tasks/${uid}`), tData = await tRes.json(), vDiv = document.getElementById('video-container'); vDiv.innerHTML = '';
+                if (tData.videos.length === 0) vDiv.innerHTML = '<div style="color:#aaa;font-size:13px;text-align:center;">📋 No tasks open.</div>';
+                tData.videos.forEach(v => { vDiv.innerHTML += `<div class="task-card"><div style="font-weight:bold;">Video Task #${v.id}</div><div style="font-size:12px;color:#aaa;margin:4px 0;" id="timer-text-${v.id}">Required: ${v.time} seconds</div><div class="progress-bar-bg" id="progress-bg-${v.id}"><div class="progress-bar-fill" id="progress-fill-${v.id}"></div></div><div style="display:flex;gap:10px;margin-top:10px;"><button class="btn" style="margin-top:0;" onclick="startVideo(${v.id}, '${v.url}', ${v.time})">1. Watch</button><button class="btn" style="background:#8e44ad;margin-top:0;" onclick="verifyVideo(${v.id})">2. Claim</button></div></div>`; });
+                document.getElementById('aff-link').href = tData.affiliate.url || '#'; document.getElementById('aff-reward').innerText = `Earn KSh ${tData.affiliate.reward.toFixed(2)} cashback allocation.`;
+                let lRes = await fetch(`${API_BASE}/api/ledger/${uid}`), lData = await lRes.json(), lDiv = document.getElementById('ledger-container'); lDiv.innerHTML = '';
+                if(lData.length === 0) lDiv.innerHTML = '<div style="color:#aaa;font-size:13px;text-align:center;">No history ledger log.</div>';
+                else { lData.forEach(item => { let classType = item.type === "withdrawal" ? "status-failed" : "status-success", sign = item.type === "withdrawal" ? "-" : "+"; lDiv.innerHTML += `<div class="ledger-item"><div><div style="font-weight:bold;">${item.description}</div><div style="font-size:11px;color:#aaa;">${item.date}</div></div><div style="text-align:right;"><div style="font-weight:bold;" class="${classType}">${sign} KSh ${item.amount.toFixed(2)}</div></div></div>`; }); }
+            } catch(e) { console.error(e); }
+        }
+        async function startVideo(vid, url, duration) {
+            await fetch(`${API_BASE}/api/click`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({user_id: uid, video_id: vid}) }); window.open(url, '_blank');
+            let bgBar = document.getElementById(`progress-bg-${vid}`), fillBar = document.getElementById(`progress-fill-${vid}`), timerTxt = document.getElementById('timer-text-' + vid);
+            if(bgBar && fillBar) { bgBar.style.display = 'block'; setTimeout(() => { fillBar.style.width = '100%'; }, 50); let remaining = duration; clearInterval(activeTimers[vid]); activeTimers[vid] = setInterval(() => { remaining--; if(remaining <= 0) { clearInterval(activeTimers[vid]); timerTxt.innerHTML = `🎉 Done! Click verify below.`; timerTxt.style.color = 'var(--success)'; } else { timerTxt.innerHTML = `⏳ Timer: ${remaining}s left...`; } }, 1000); }
+        }
+        async function verifyVideo(vid) { clearInterval(activeTimers[vid]); let res = await fetch(`${API_BASE}/api/verify`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({user_id: uid, video_id: vid}) }), data = await res.json(); alert(data.msg); loadDashboard(); }
+        async function requestWithdrawal() { let phone = document.getElementById('phone-input').value.trim(); if(!phone) return alert("Enter phone."); let res = await fetch(`${API_BASE}/api/withdraw`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({user_id: uid, phone: phone}) }), data = await res.json(); alert(data.msg); loadDashboard(); }
+        async function loadAdminDashboard() {
+            try {
+                let res = await fetch(`${API_BASE}/api/admin/dashboard?password=Money`), data = await res.json(), cTable = document.getElementById('adm-campaigns-table').getElementsByTagName('tbody'); cTable.innerHTML = '';
+                data.campaigns.forEach(c => { cTable.innerHTML += `<tr><td>${c.id}</td><td>${c.url}</td><td>${c.current}/${c.max}</td><td>${c.time}s</td><td><button class="btn" style="margin-top:0;padding:4px;background:var(--danger);" onclick="adminDeleteVideo(${c.id})">Kill</button></td></tr>`; });
+                let pTable = document.getElementById('adm-payouts-table').getElementsByTagName('tbody'); pTable.innerHTML = '';
+                if(data.payouts.length === 0) pTable.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#aaa;">No pending payouts.</td></tr>';
+                data.payouts.forEach(p => { pTable.innerHTML += `<tr><td>@${p.username}</td><td>${p.phone}</td><td>KSh ${p.balance}</td><td><button class="btn" style="margin-top:0;padding:4px;background:var(--success);" onclick="adminPayUser(${p.id}, ${p.balance})">Clear</button></td></tr>`; });
+            } catch(e) { console.error(e); }
+        }
+        async function adminAddVideo() { let url = document.getElementById('adm-v-url').value.trim(), views = document.getElementById('adm-v-views').value.trim(), time = document.getElementById('adm-v-time').value.trim(); if(!url || !views || !time) return alert("Fill all."); await fetch(`${API_BASE}/api/admin/add_video`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({password: "Money", url: url, max_views: parseInt(views), watch_time: parseInt(time)}) }); alert("Deployed!"); loadAdminDashboard(); }
+        async function adminAddAffiliate() { let url = document.getElementById('adm-a-url').value.trim(), reward = document.getElementById('adm-a-reward').value.trim(); if(!url || !reward) return alert("Fill all."); await fetch(`${API_BASE}/api/admin/add_affiliate`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({password: "Money", url: url, reward: parseFloat(reward)}) }); alert("Updated!"); loadAdminDashboard(); }
+        async function adminDeleteVideo(vid) { if(!confirm("Delete?")) return; await fetch(`${API_BASE}/api/admin/delete_video`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({password: "Money", video_id: vid}) }); loadAdminDashboard(); }
+        async function adminPayUser(uid, amt) { if(!confirm("Settle?")) return; await fetch(`${API_BASE}/api/admin/settle_user`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({password: "Money", user_id: uid}) }); loadAdminDashboard(); }
+        loadDashboard();
+    </script>
+</body>
+</html>
