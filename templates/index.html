@@ -1,90 +1,28 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cash Engine Wallet</title>
-    <script src="https://telegram.org"></script>
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #0e1621; color: #fff; margin: 0; padding: 15px; text-align: center; }
-        .card { background: linear-gradient(135deg, #1c92d2, #f2fcfe); color: #000; border-radius: 15px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); text-align: left; }
-        .balance-title { font-size: 14px; opacity: 0.8; font-weight: bold; }
-        .balance-value { font-size: 32px; font-weight: bold; margin-top: 5px; }
-        .section-title { text-align: left; font-size: 18px; font-weight: bold; margin: 20px 0 10px 0; color: #3498db; }
-        .btn { display: block; width: 100%; padding: 12px; background: #2481cc; border: none; color: #fff; border-radius: 10px; font-weight: bold; font-size: 16px; cursor: pointer; text-decoration: none; margin-top: 10px; box-sizing: border-box; }
-        .task-card { background: #17212b; padding: 15px; border-radius: 10px; margin-bottom: 10px; text-align: left; border: 1px solid #242f3d; }
-        input { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #242f3d; background: #17212b; color: #fff; box-sizing: border-box; font-size: 16px; margin-top: 5px; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LipaViews Mini App</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: #0f172a; color: #f8fafc; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 16px; }
+    .card { background: #1e293b; border-radius: 16px; padding: 24px; width: 100%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); text-align: center; }
+    h1 { color: #38bdf8; font-size: 24px; margin-bottom: 8px; }
+    p { color: #94a3b8; font-size: 14px; margin-bottom: 20px; }
+    .btn { background: #0284c7; color: white; border: none; padding: 12px 20px; font-size: 16px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; }
+    .btn:hover { background: #0369a1; }
+  </style>
 </head>
 <body>
-    <div class="card">
-        <div class="balance-title">💰 TOTAL ACTIVE WALLET</div>
-        <div id="balance" class="balance-value">KSh 0.00</div>
-        <div style="font-size:12px; opacity:0.6; margin-top:5px;" id="username">Loading...</div>
-    </div>
-    <div class="section-title">📺 Video Monetization Tasks</div>
-    <div id="video-container"></div>
-    <div class="section-title">🛍️ Shopping Cashback</div>
-    <div class="task-card">
-        <div style="font-weight:bold;">Shop & Claim Cashback</div>
-        <div style="font-size:13px; color:#aaa; margin:5px 0;" id="aff-reward">Earn rewards on deals.</div>
-        <a id="aff-link" class="btn" style="background:#27ae60;" target="_blank">Shop Network Deals</a>
-    </div>
-    <div class="section-title">💸 Payout Settlements</div>
-    <div class="task-card">
-        <label style="font-size:13px; color:#aaa;">MiniPay Registered Mobile Number</label>
-        <input type="tel" id="phone-input" placeholder="e.g. 0702326612">
-        <button class="btn" style="background:#e74c3c;" onclick="requestWithdrawal()">Extract Cash to MiniPay</button>
-    </div>
-    <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-        const uid = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : 12345;
-        const API_BASE = window.location.origin;
-        async function loadDashboard() {
-            try {
-                let pRes = await fetch(`${API_BASE}/api/user/${uid}`);
-                let pData = await pRes.json();
-                document.getElementById('balance').innerText = `KSh ${pData.balance.toFixed(2)}`;
-                document.getElementById('phone-input').value = pData.phone;
-                document.getElementById('username').innerText = `Account Identity: @${pData.username}`;
-                let tRes = await fetch(`${API_BASE}/api/tasks/${uid}`);
-                let tData = await tRes.json();
-                let vDiv = document.getElementById('video-container');
-                vDiv.innerHTML = '';
-                if(tData.videos.length === 0) { vDiv.innerHTML = '<div style="color:#aaa; font-size:14px; padding:10px;">No ads available right now.</div>'; }
-                tData.videos.forEach(v => {
-                    vDiv.innerHTML += `
-                        <div class="task-card">
-                            <div style="font-weight:bold;">Watch Campaign Asset #${v.id}</div>
-                            <div style="font-size:12px; color:#aaa; margin-bottom:8px;">Required: ${v.time} seconds</div>
-                            <button class="btn" onclick="startVideo(${v.id}, '${v.url}')">1. Open Video Stream</button>
-                            <button class="btn" style="background:#8e44ad;" onclick="verifyVideo(${v.id})">2. Verify & Claim</button>
-                        </div>`;
-                });
-                document.getElementById('aff-link').href = tData.affiliate.url;
-                document.getElementById('aff-reward').innerText = `Earn KSh ${tData.affiliate.reward.toFixed(2)} cashback on orders.`;
-            } catch(e) { console.error(e); }
-        }
-        async function startVideo(vid, url) {
-            await fetch(`${API_BASE}/api/click`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({user_id: uid, video_id: vid}) });
-            window.open(url, '_blank');
-        }
-        async function verifyVideo(vid) {
-            let res = await fetch(`${API_BASE}/api/verify`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({user_id: uid, video_id: vid}) });
-            let data = await res.json();
-            alert(data.msg);
-            loadDashboard();
-        }
-        async function requestWithdrawal() {
-            let phone = document.getElementById('phone-input').value.trim();
-            if(!phone) { alert("Please input a number."); return; }
-            let res = await fetch(`${API_BASE}/api/withdraw`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({user_id: uid, phone: phone}) });
-            let data = await res.json();
-            alert(data.msg);
-            loadDashboard();
-        }
-        loadDashboard();
-    </script>
+  <div class="card">
+    <h1>LipaViews</h1>
+    <p>Welcome to LipaViews Telegram Mini App. Your backend is live and connected!</p>
+    <button class="btn" onclick="Telegram.WebApp.close()">Close App</button>
+  </div>
+  <script>
+    Telegram.WebApp.ready();
+  </script>
 </body>
 </html>
