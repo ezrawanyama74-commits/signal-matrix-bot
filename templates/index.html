@@ -7,22 +7,123 @@
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background-color: #0f172a; color: #f8fafc; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 16px; }
-    .card { background: #1e293b; border-radius: 16px; padding: 24px; width: 100%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); text-align: center; }
-    h1 { color: #38bdf8; font-size: 24px; margin-bottom: 8px; }
-    p { color: #94a3b8; font-size: 14px; margin-bottom: 20px; }
-    .btn { background: #0284c7; color: white; border: none; padding: 12px 20px; font-size: 16px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; }
-    .btn:hover { background: #0369a1; }
+    body { background-color: #0f172a; color: #f8fafc; min-height: 100vh; padding: 16px; pb: 40px; }
+    .header { text-align: center; margin-bottom: 20px; border-bottom: 1px solid #334155; padding-bottom: 12px; }
+    .header h1 { color: #38bdf8; font-size: 24px; }
+    .balance-card { background: linear-gradient(135deg, #1e293b, #0f172a); border: 1px solid #38bdf8; border-radius: 12px; padding: 16px; margin-bottom: 20px; text-align: center; }
+    .balance-title { font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+    .balance-amount { font-size: 32px; font-weight: bold; color: #4ade80; margin: 4px 0; }
+    
+    .section-title { font-size: 18px; color: #cbd5e1; margin-bottom: 12px; }
+    .video-card { background: #1e293b; border-radius: 12px; overflow: hidden; margin-bottom: 16px; border: 1px solid #334155; }
+    .video-container { position: relative; width: 100%; padding-top: 56.25%; background: #000; }
+    .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
+    .video-info { padding: 12px; }
+    .video-title { font-size: 14px; font-weight: 600; margin-bottom: 8px; color: #f1f5f9; }
+    .video-meta { display: flex; justify-content: space-between; font-size: 12px; color: #94a3b8; margin-bottom: 12px; }
+    
+    .timer-bar { background: #334155; height: 8px; border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
+    .timer-fill { background: #38bdf8; height: 100%; width: 0%; transition: width 1s linear; }
+    
+    .btn { background: #0284c7; color: white; border: none; padding: 12px 16px; font-size: 14px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; text-align: center; display: inline-block; }
+    .btn:disabled { background: #475569; cursor: not-allowed; }
+    .btn-submit { background: #16a34a; margin-top: 8px; }
+    
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; padding: 16px; z-index: 100; }
+    .modal-content { background: #1e293b; border-radius: 12px; padding: 20px; width: 100%; max-width: 360px; text-align: center; }
+    .input-field { width: 100%; padding: 10px; margin: 12px 0; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: white; font-size: 14px; }
   </style>
 </head>
 <body>
-  <div class="card">
+
+  <div class="header">
     <h1>LipaViews</h1>
-    <p>Welcome to LipaViews Telegram Mini App. Your backend is live and connected!</p>
-    <button class="btn" onclick="Telegram.WebApp.close()">Close App</button>
+    <p id="user-display">Loading Telegram User...</p>
   </div>
+
+  <div class="balance-card">
+    <div class="balance-title">Estimated Earnings</div>
+    <div class="balance-amount" id="balance">KES 0.00</div>
+    <button class="btn" style="width: auto; padding: 6px 16px; font-size: 12px;" onclick="openSubmitModal()">Withdraw / Add Task</button>
+  </div>
+
+  <div class="section-title">Available Watch Tasks</div>
+
+  <!-- Active Task Card -->
+  <div class="video-card">
+    <div class="video-container">
+      <iframe id="yt-player" src="https://www.youtube.com/embed/M7lc1UVf-VE?enablejsapi=1" allowfullscreen></iframe>
+    </div>
+    <div class="video-info">
+      <div class="video-title">Watch Video to Earn Reward</div>
+      <div class="video-meta">
+        <span>Reward: <b>KES 10.00</b></span>
+        <span>Required Time: <b>30s</b></span>
+      </div>
+      <div class="timer-bar"><div class="timer-fill" id="timer-progress"></div></div>
+      <button class="btn" id="start-btn" onclick="startWatching()">Start Watching (30s)</button>
+    </div>
+  </div>
+
+  <!-- Submission Modal -->
+  <div class="modal" id="task-modal">
+    <div class="modal-content">
+      <h3 style="margin-bottom: 12px;">Submit YouTube Link</h3>
+      <p style="font-size: 12px; color: #94a3b8;">Enter YouTube Video URL to promote on LipaViews.</p>
+      <input type="text" class="input-field" id="video-url" placeholder="https://youtu.be/...">
+      <button class="btn btn-submit" onclick="submitTask()">Submit for Promotion</button>
+      <button class="btn" style="background: transparent; color: #94a3b8; margin-top: 8px;" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+
   <script>
-    Telegram.WebApp.ready();
+    const tg = window.Telegram.WebApp;
+    tg.ready();
+    tg.expand();
+
+    if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+      document.getElementById('user-display').innerText = "@" + (tg.initDataUnsafe.user.username || tg.initDataUnsafe.user.first_name);
+    } else {
+      document.getElementById('user-display').innerText = "Web Session";
+    }
+
+    let watchTime = 0;
+    let requiredTime = 30;
+    let timerInterval = null;
+    let currentBalance = 0.00;
+
+    function startWatching() {
+      const btn = document.getElementById('start-btn');
+      btn.disabled = true;
+      btn.innerText = "Watching... Keep page open";
+      
+      watchTime = 0;
+      clearInterval(timerInterval);
+
+      timerInterval = setInterval(() => {
+        watchTime++;
+        let percent = (watchTime / requiredTime) * 100;
+        document.getElementById('timer-progress').style.width = percent + "%";
+
+        if (watchTime >= requiredTime) {
+          clearInterval(timerInterval);
+          currentBalance += 10.00;
+          document.getElementById('balance').innerText = "KES " + currentBalance.toFixed(2);
+          btn.innerText = "Task Completed (+KES 10.00)";
+          btn.style.background = "#22c55e";
+        }
+      }, 1000);
+    }
+
+    function openSubmitModal() { document.getElementById('task-modal').style.display = 'flex'; }
+    function closeModal() { document.getElementById('task-modal').style.display = 'none'; }
+
+    function submitTask() {
+      const url = document.getElementById('video-url').value;
+      if (!url) return alert("Please enter a valid link.");
+      alert("Submitted! Your video is queued for review.");
+      closeModal();
+    }
   </script>
 </body>
 </html>
