@@ -44,7 +44,7 @@
   <div class="balance-card">
     <div class="balance-title">Estimated Earnings</div>
     <div class="balance-amount" id="balance">KES 0.00</div>
-    <button class="btn" style="width: auto; padding: 6px 16px; font-size: 12px;" onclick="openSubmitModal()">Withdraw / Add Task</button>
+    <button class="btn" style="width: auto; padding: 6px 16px; font-size: 12px;" onclick="openSubmitModal()">Add Task / Promote Link</button>
   </div>
 
   <div class="section-title">Available Watch Tasks</div>
@@ -69,9 +69,9 @@
   <div class="modal" id="task-modal">
     <div class="modal-content">
       <h3 style="margin-bottom: 12px;">Submit YouTube Link</h3>
-      <p style="font-size: 12px; color: #94a3b8;">Enter YouTube Video URL to promote on LipaViews.</p>
+      <p style="font-size: 12px; color: #94a3b8;">Enter YouTube Video URL to store in database for review.</p>
       <input type="text" class="input-field" id="video-url" placeholder="https://youtu.be/...">
-      <button class="btn btn-submit" onclick="submitTask()">Submit for Promotion</button>
+      <button class="btn btn-submit" id="submit-btn" onclick="submitTask()">Submit to Database</button>
       <button class="btn" style="background: transparent; color: #94a3b8; margin-top: 8px;" onclick="closeModal()">Cancel</button>
     </div>
   </div>
@@ -118,11 +118,38 @@
     function openSubmitModal() { document.getElementById('task-modal').style.display = 'flex'; }
     function closeModal() { document.getElementById('task-modal').style.display = 'none'; }
 
-    function submitTask() {
-      const url = document.getElementById('video-url').value;
+    async function submitTask() {
+      const urlInput = document.getElementById('video-url');
+      const submitBtn = document.getElementById('submit-btn');
+      const url = urlInput.value.trim();
+      
       if (!url) return alert("Please enter a valid link.");
-      alert("Submitted! Your video is queued for review.");
-      closeModal();
+
+      submitBtn.disabled = true;
+      submitBtn.innerText = "Submitting...";
+
+      try {
+        const response = await fetch('/api/submit-task', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ video_url: url })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          alert("Success: " + result.message);
+          urlInput.value = "";
+          closeModal();
+        } else {
+          alert("Error: " + (result.error || "Submission failed"));
+        }
+      } catch (err) {
+        alert("Network error submitting task.");
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerText = "Submit to Database";
+      }
     }
   </script>
 </body>
