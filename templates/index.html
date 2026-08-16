@@ -3,76 +3,93 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LipaViews Mini App</title>
+  <title>LipaViews Mini App - Full Feature Suite</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background-color: #0f172a; color: #f8fafc; min-height: 100vh; padding: 16px; pb: 40px; }
-    .header { text-align: center; margin-bottom: 20px; border-bottom: 1px solid #334155; padding-bottom: 12px; }
-    .header h1 { color: #38bdf8; font-size: 24px; }
-    .balance-card { background: linear-gradient(135deg, #1e293b, #0f172a); border: 1px solid #38bdf8; border-radius: 12px; padding: 16px; margin-bottom: 20px; text-align: center; }
-    .balance-title { font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
-    .balance-amount { font-size: 32px; font-weight: bold; color: #4ade80; margin: 4px 0; }
+    body { background-color: #0f172a; color: #f8fafc; min-height: 100vh; padding: 16px; padding-bottom: 80px; }
     
-    .section-title { font-size: 18px; color: #cbd5e1; margin-bottom: 12px; }
-    .video-card { background: #1e293b; border-radius: 12px; overflow: hidden; margin-bottom: 16px; border: 1px solid #334155; }
-    .video-container { position: relative; width: 100%; padding-top: 56.25%; background: #000; }
-    .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
-    .video-info { padding: 12px; }
-    .video-title { font-size: 14px; font-weight: 600; margin-bottom: 8px; color: #f1f5f9; }
-    .video-meta { display: flex; justify-content: space-between; font-size: 12px; color: #94a3b8; margin-bottom: 12px; }
+    .header { text-align: center; margin-bottom: 16px; border-bottom: 1px solid #334155; padding-bottom: 8px; }
+    .header h1 { color: #38bdf8; font-size: 22px; }
+    .user-badge { font-size: 12px; color: #94a3b8; }
     
-    .timer-bar { background: #334155; height: 8px; border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
-    .timer-fill { background: #38bdf8; height: 100%; width: 0%; transition: width 1s linear; }
+    .balance-card { background: linear-gradient(135deg, #1e293b, #0f172a); border: 1px solid #38bdf8; border-radius: 12px; padding: 16px; margin-bottom: 16px; text-align: center; }
+    .balance-title { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+    .balance-amount { font-size: 30px; font-weight: bold; color: #4ade80; margin: 4px 0; }
     
-    .btn { background: #0284c7; color: white; border: none; padding: 12px 16px; font-size: 14px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; text-align: center; display: inline-block; }
+    .nav-tabs { display: flex; justify-content: space-around; background: #1e293b; padding: 6px; border-radius: 10px; margin-bottom: 16px; border: 1px solid #334155; }
+    .tab-btn { background: none; border: none; color: #94a3b8; font-size: 13px; font-weight: bold; padding: 8px 12px; border-radius: 6px; cursor: pointer; }
+    .tab-btn.active { background: #0284c7; color: white; }
+    
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .card { background: #1e293b; border-radius: 12px; padding: 14px; margin-bottom: 12px; border: 1px solid #334155; }
+    .btn { background: #0284c7; color: white; border: none; padding: 10px 14px; font-size: 13px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; text-align: center; }
     .btn:disabled { background: #475569; cursor: not-allowed; }
-    .btn-submit { background: #16a34a; margin-top: 8px; }
-    
-    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; padding: 16px; z-index: 100; }
-    .modal-content { background: #1e293b; border-radius: 12px; padding: 20px; width: 100%; max-width: 360px; text-align: center; }
-    .input-field { width: 100%; padding: 10px; margin: 12px 0; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: white; font-size: 14px; }
+    .btn-success { background: #16a34a; }
+    .input-field { width: 100%; padding: 10px; margin: 8px 0 12px 0; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: white; font-size: 13px; }
+
+    .video-container { position: relative; width: 100%; padding-top: 56.25%; background: #000; border-radius: 8px; overflow: hidden; margin-bottom: 10px; }
+    .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
+    .timer-bar { background: #334155; height: 6px; border-radius: 3px; overflow: hidden; margin: 8px 0; }
+    .timer-fill { background: #38bdf8; height: 100%; width: 0%; transition: width 1s linear; }
+
+    .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: #0f172a; border-top: 1px solid #334155; display: flex; justify-content: space-around; padding: 10px 0; z-index: 99; }
   </style>
 </head>
 <body>
 
   <div class="header">
     <h1>LipaViews</h1>
-    <p id="user-display">Loading Telegram User...</p>
+    <div class="user-badge" id="user-display">Connecting Telegram...</div>
   </div>
 
   <div class="balance-card">
-    <div class="balance-title">Estimated Earnings</div>
+    <div class="balance-title">Verified Wallet Balance</div>
     <div class="balance-amount" id="balance">KES 0.00</div>
-    <button class="btn" style="width: auto; padding: 6px 16px; font-size: 12px;" onclick="openSubmitModal()">Add Task / Promote Link</button>
+    <div style="font-size: 11px; color: #38bdf8;" id="vip-status">Account Level: Standard Free</div>
   </div>
 
-  <div class="section-title">Available Watch Tasks</div>
+  <div class="nav-tabs">
+    <button class="tab-btn active" onclick="switchTab('tasks-tab', this)">Tasks</button>
+    <button class="tab-btn" onclick="switchTab('vip-tab', this)">VIP Upgrade</button>
+    <button class="tab-btn" onclick="switchTab('referral-tab', this)">Referrals</button>
+    <button class="tab-btn" onclick="switchTab('payout-tab', this)">Payouts</button>
+  </div>
 
-  <!-- Active Task Card -->
-  <div class="video-card">
-    <div class="video-container">
-      <iframe id="yt-player" src="https://www.youtube.com/embed/M7lc1UVf-VE?enablejsapi=1" allowfullscreen></iframe>
-    </div>
-    <div class="video-info">
-      <div class="video-title">Watch Video to Earn Reward</div>
-      <div class="video-meta">
-        <span>Reward: <b>KES 10.00</b></span>
-        <span>Required Time: <b>30s</b></span>
-      </div>
-      <div class="timer-bar"><div class="timer-fill" id="timer-progress"></div></div>
-      <button class="btn" id="start-btn" onclick="startWatching()">Start Watching (30s)</button>
+  <!-- Tab 1: Dynamic Tasks Engine -->
+  <div class="tab-content active" id="tasks-tab">
+    <div id="tasks-container">Loading available tasks...</div>
+  </div>
+
+  <!-- Tab 2: VIP Subscription & M-Pesa Deposit -->
+  <div class="tab-content" id="vip-tab">
+    <div class="card">
+      <h3 style="color: #eab308; margin-bottom: 6px;">Upgrade to LipaViews VIP</h3>
+      <p style="font-size: 12px; color: #94a3b8; margin-bottom: 10px;">Unlock 2x reward multipliers on watch tasks and priority Sunday payout processing.</p>
+      <label style="font-size: 11px; color: #cbd5e1;">M-Pesa Transaction Receipt:</label>
+      <input type="text" class="input-field" id="vip-receipt" placeholder="e.g. QKH89XX12">
+      <button class="btn btn-success" onclick="submitVIPDeposit()">Submit KES 200 VIP Upgrade</button>
     </div>
   </div>
 
-  <!-- Submission Modal -->
-  <div class="modal" id="task-modal">
-    <div class="modal-content">
-      <h3 style="margin-bottom: 12px;">Submit YouTube Link</h3>
-      <p style="font-size: 12px; color: #94a3b8;">Enter YouTube Video URL to store in database for review.</p>
-      <input type="text" class="input-field" id="video-url" placeholder="https://youtu.be/...">
-      <button class="btn btn-submit" id="submit-btn" onclick="submitTask()">Submit to Database</button>
-      <button class="btn" style="background: transparent; color: #94a3b8; margin-top: 8px;" onclick="closeModal()">Cancel</button>
+  <!-- Tab 3: Referrals & Link Generation -->
+  <div class="tab-content" id="referral-tab">
+    <div class="card">
+      <h3 style="margin-bottom: 6px;">Invite Friends & Earn</h3>
+      <p style="font-size: 12px; color: #94a3b8; margin-bottom: 10px;">Earn KES 5.00 instantly for every user who joins via your referral link.</p>
+      <input type="text" class="input-field" id="ref-link" readonly value="https://t.me/LipaViewsBot">
+      <button class="btn" onclick="copyRefLink()">Copy Referral Link</button>
+    </div>
+  </div>
+
+  <!-- Tab 4: Automated Sunday Payout Engine -->
+  <div class="tab-content" id="payout-tab">
+    <div class="card">
+      <h3 style="margin-bottom: 6px;">Request Sunday Payout</h3>
+      <p style="font-size: 12px; color: #94a3b8; margin-bottom: 10px;">Payouts are processed automatically every Sunday directly to your registered mobile wallet (Min threshold: KES 100.00).</p>
+      <button class="btn btn-success" onclick="requestPayout()">Request Cash Out</button>
     </div>
   </div>
 
@@ -81,76 +98,130 @@
     tg.ready();
     tg.expand();
 
+    let currentUser = { telegram_id: 12345678, username: 'WebUser' };
     if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-      document.getElementById('user-display').innerText = "@" + (tg.initDataUnsafe.user.username || tg.initDataUnsafe.user.first_name);
-    } else {
-      document.getElementById('user-display').innerText = "Web Session";
+      currentUser.telegram_id = tg.initDataUnsafe.user.id;
+      currentUser.username = tg.initDataUnsafe.user.username || tg.initDataUnsafe.user.first_name;
     }
 
-    let watchTime = 0;
-    let requiredTime = 30;
-    let timerInterval = null;
-    let currentBalance = 0.00;
+    document.getElementById('user-display').innerText = "@" + currentUser.username + " (ID: " + currentUser.telegram_id + ")";
+    document.getElementById('ref-link').value = "https://t.me/LipaViewsBot?start=ref_" + currentUser.telegram_id;
 
-    function startWatching() {
-      const btn = document.getElementById('start-btn');
+    async function syncUser() {
+      try {
+        const res = await fetch('/api/sync-user', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(currentUser)
+        });
+        const data = await res.json();
+        if (data.user) {
+          document.getElementById('balance').innerText = "KES " + parseFloat(data.user.balance).toFixed(2);
+          if (data.user.is_vip) document.getElementById('vip-status').innerText = "Account Level: VIP Member";
+        }
+      } catch(e) { console.error(e); }
+    }
+
+    async function loadTasks() {
+      const container = document.getElementById('tasks-container');
+      try {
+        const res = await fetch('/api/tasks?telegram_id=' + currentUser.telegram_id);
+        const data = await res.json();
+        
+        container.innerHTML = '';
+        data.tasks.forEach(task => {
+          const card = document.createElement('div');
+          card.className = 'card';
+          card.innerHTML = `
+            <div class="video-container">
+              <iframe src="${task.video_url}?enablejsapi=1"></iframe>
+            </div>
+            <div style="font-weight: bold; font-size: 14px; margin-bottom: 4px;">${task.title}</div>
+            <div style="font-size: 12px; color: #94a3b8; margin-bottom: 8px;">Reward: <b style="color:#4ade80;">KES ${parseFloat(task.reward_kes).toFixed(2)}</b> | Time: ${task.duration_sec}s</div>
+            <div class="timer-bar"><div class="timer-fill" id="timer-${task.id}"></div></div>
+            <button class="btn" id="btn-${task.id}" ${task.completed ? 'disabled' : ''} onclick="startWatchTask(${task.id}, ${task.duration_sec})">
+              ${task.completed ? 'Completed ✓' : 'Watch & Earn'}
+            </button>
+          `;
+          container.appendChild(card);
+        });
+      } catch(e) { container.innerHTML = 'Error loading tasks.'; }
+    }
+
+    let activeInterval = null;
+    function startWatchTask(taskId, duration) {
+      const btn = document.getElementById('btn-' + taskId);
       btn.disabled = true;
-      btn.innerText = "Watching... Keep page open";
+      let elapsed = 0;
       
-      watchTime = 0;
-      clearInterval(timerInterval);
+      clearInterval(activeInterval);
+      activeInterval = setInterval(async () => {
+        elapsed++;
+        let pct = (elapsed / duration) * 100;
+        document.getElementById('timer-' + taskId).style.width = pct + "%";
+        btn.innerText = `Watching... (${duration - elapsed}s)`;
 
-      timerInterval = setInterval(() => {
-        watchTime++;
-        let percent = (watchTime / requiredTime) * 100;
-        document.getElementById('timer-progress').style.width = percent + "%";
-
-        if (watchTime >= requiredTime) {
-          clearInterval(timerInterval);
-          currentBalance += 10.00;
-          document.getElementById('balance').innerText = "KES " + currentBalance.toFixed(2);
-          btn.innerText = "Task Completed (+KES 10.00)";
-          btn.style.background = "#22c55e";
+        if (elapsed >= duration) {
+          clearInterval(activeInterval);
+          btn.innerText = "Verifying...";
+          const res = await fetch('/api/claim-reward', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ telegram_id: currentUser.telegram_id, task_id: taskId, watch_time_sec: elapsed })
+          });
+          const result = await res.json();
+          if (res.ok) {
+            alert(result.message);
+            document.getElementById('balance').innerText = "KES " + result.new_balance.toFixed(2);
+            btn.innerText = "Completed ✓";
+          } else {
+            alert("Error: " + result.error);
+            btn.innerText = "Watch & Earn";
+            btn.disabled = false;
+          }
         }
       }, 1000);
     }
 
-    function openSubmitModal() { document.getElementById('task-modal').style.display = 'flex'; }
-    function closeModal() { document.getElementById('task-modal').style.display = 'none'; }
-
-    async function submitTask() {
-      const urlInput = document.getElementById('video-url');
-      const submitBtn = document.getElementById('submit-btn');
-      const url = urlInput.value.trim();
-      
-      if (!url) return alert("Please enter a valid link.");
-
-      submitBtn.disabled = true;
-      submitBtn.innerText = "Submitting...";
-
-      try {
-        const response = await fetch('/api/submit-task', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ video_url: url })
-        });
-
-        const result = await response.json();
-
-        if (response.ok) {
-          alert("Success: " + result.message);
-          urlInput.value = "";
-          closeModal();
-        } else {
-          alert("Error: " + (result.error || "Submission failed"));
-        }
-      } catch (err) {
-        alert("Network error submitting task.");
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.innerText = "Submit to Database";
-      }
+    function switchTab(tabId, btn) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      btn.classList.add('active');
     }
+
+    async function submitVIPDeposit() {
+      const receipt = document.getElementById('vip-receipt').value.trim();
+      if (!receipt) return alert("Enter receipt code");
+      const res = await fetch('/api/deposit-request', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ telegram_id: currentUser.telegram_id, mpesa_receipt: receipt, amount: 200, type: 'vip_upgrade' })
+      });
+      const data = await res.json();
+      alert(data.message);
+    }
+
+    async function requestPayout() {
+      const res = await fetch('/api/request-payout', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ telegram_id: currentUser.telegram_id })
+      });
+      const data = await res.json();
+      alert(data.message || data.error);
+      syncUser();
+    }
+
+    function copyRefLink() {
+      const input = document.getElementById('ref-link');
+      input.select();
+      document.execCommand('copy');
+      alert("Referral link copied!");
+    }
+
+    syncUser();
+    loadTasks();
   </script>
 </body>
 </html>
