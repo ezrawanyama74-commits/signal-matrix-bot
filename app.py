@@ -1,4 +1,3 @@
-# (paste code here)
 import os
 from datetime import datetime, date
 from flask import Flask, render_template, request, jsonify
@@ -33,23 +32,23 @@ class VideoTask(db.Model):
 
 class ActiveWatchSession(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    task_id = db.Column(db.Integer, db.ForeignKey('video_task.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
+    task_id = db.Column(db.Integer, db.ForeignKey('video_task.id', ondelete='CASCADE'), nullable=False)
     started_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class UserWatchHistory(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
+    task_id = db.Column(db.Integer, db.ForeignKey('video_task.id', ondelete='CASCADE'), nullable=False)
 
 class WithdrawalRequest(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
     full_name = db.Column(db.String(100), nullable=False)
     phone_number = db.Column(db.String(20), nullable=False)
     amount = db.Column(db.Float, nullable=False)
     status = db.Column(db.String(20), default='pending')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-class UserWatchHistory(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    task_id = db.Column(db.Integer, db.ForeignKey('video_task.id'), nullable=False)
 
 with app.app_context():
     db.create_all()
@@ -155,7 +154,6 @@ def next_task():
     if not task:
         return jsonify({'task': None, 'message': 'No more video tasks available today.'})
 
-    # Reset watch timer session on task load
     ActiveWatchSession.query.filter_by(user_id=user.id).delete()
     session = ActiveWatchSession(user_id=user.id, task_id=task.id, started_at=datetime.utcnow())
     db.session.add(session)
@@ -310,4 +308,3 @@ def update_tier():
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=True)
-
