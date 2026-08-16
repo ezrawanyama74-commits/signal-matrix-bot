@@ -1,227 +1,348 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LipaViews Mini App - Full Feature Suite</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background-color: #0f172a; color: #f8fafc; min-height: 100vh; padding: 16px; padding-bottom: 80px; }
-    
-    .header { text-align: center; margin-bottom: 16px; border-bottom: 1px solid #334155; padding-bottom: 8px; }
-    .header h1 { color: #38bdf8; font-size: 22px; }
-    .user-badge { font-size: 12px; color: #94a3b8; }
-    
-    .balance-card { background: linear-gradient(135deg, #1e293b, #0f172a); border: 1px solid #38bdf8; border-radius: 12px; padding: 16px; margin-bottom: 16px; text-align: center; }
-    .balance-title { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
-    .balance-amount { font-size: 30px; font-weight: bold; color: #4ade80; margin: 4px 0; }
-    
-    .nav-tabs { display: flex; justify-content: space-around; background: #1e293b; padding: 6px; border-radius: 10px; margin-bottom: 16px; border: 1px solid #334155; }
-    .tab-btn { background: none; border: none; color: #94a3b8; font-size: 13px; font-weight: bold; padding: 8px 12px; border-radius: 6px; cursor: pointer; }
-    .tab-btn.active { background: #0284c7; color: white; }
-    
-    .tab-content { display: none; }
-    .tab-content.active { display: block; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>LipaViews - Watch & Earn</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-dark: #0a0e17;
+            --card-bg: #141c2e;
+            --card-border: #222f47;
+            --accent-orange: linear-gradient(135deg, #ff6b00 0%, #ff8800 100%);
+            --text-main: #ffffff;
+            --text-muted: #8a99ad;
+        }
 
-    .card { background: #1e293b; border-radius: 12px; padding: 14px; margin-bottom: 12px; border: 1px solid #334155; }
-    .btn { background: #0284c7; color: white; border: none; padding: 10px 14px; font-size: 13px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; text-align: center; }
-    .btn:disabled { background: #475569; cursor: not-allowed; }
-    .btn-success { background: #16a34a; }
-    .input-field { width: 100%; padding: 10px; margin: 8px 0 12px 0; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: white; font-size: 13px; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        body { background-color: var(--bg-dark); color: var(--text-main); display: flex; justify-content: center; min-height: 100vh; }
+        .app-container { width: 100%; max-width: 480px; min-height: 100vh; position: relative; padding-bottom: 80px; }
 
-    .video-container { position: relative; width: 100%; padding-top: 56.25%; background: #000; border-radius: 8px; overflow: hidden; margin-bottom: 10px; }
-    .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
-    .timer-bar { background: #334155; height: 6px; border-radius: 3px; overflow: hidden; margin: 8px 0; }
-    .timer-fill { background: #38bdf8; height: 100%; width: 0%; transition: width 1s linear; }
+        #auth-screen { padding: 40px 20px; display: flex; flex-direction: column; justify-content: center; min-height: 100vh; }
+        .auth-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 20px; padding: 24px; text-align: center; }
+        .auth-card h2 { font-size: 22px; margin-bottom: 8px; color: #38bdf8; }
+        .auth-card p { color: var(--text-muted); font-size: 13px; margin-bottom: 20px; }
 
-    .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: #0f172a; border-top: 1px solid #334155; display: flex; justify-content: space-around; padding: 10px 0; z-index: 99; }
-  </style>
+        .input-group { margin-bottom: 14px; text-align: left; }
+        .input-group label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
+        .input-group input { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--card-border); background: #0d131f; color: white; font-size: 14px; outline: none; }
+
+        .btn-glow { width: 100%; padding: 14px; border: none; border-radius: 12px; background: var(--accent-orange); color: white; font-weight: bold; cursor: pointer; }
+        .btn-disabled { opacity: 0.5; cursor: not-allowed; background: #334155 !important; }
+        
+        #main-app { display: none; padding: 16px; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .avatar { width: 40px; height: 40px; border-radius: 50%; background: #ff6b00; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        
+        .balance-card { background: linear-gradient(135deg, #1e1103 0%, #2a1704 100%); border: 1px solid #ff6b0055; border-radius: 20px; padding: 20px; margin-bottom: 16px; }
+        .balance-amount { font-size: 32px; font-weight: 800; margin: 6px 0; }
+        .action-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+        .action-btn { background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.1); padding: 10px; border-radius: 10px; color: white; font-size: 12px; font-weight: 600; text-align: center; cursor: pointer; }
+
+        .video-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 14px; margin-bottom: 16px; }
+        .video-container { width: 100%; height: 320px; background: #000; border-radius: 12px; overflow: hidden; margin-bottom: 12px; }
+        .video-container iframe { width: 100%; height: 100%; border: none; }
+
+        .tiers-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+        .tier-item { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 12px; display: flex; justify-content: space-between; align-items: center; }
+
+        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); z-index: 100; align-items: center; justify-content: center; padding: 16px; }
+        .modal-content { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 20px; width: 100%; max-width: 400px; }
+    </style>
 </head>
 <body>
 
-  <div class="header">
-    <h1>LipaViews</h1>
-    <div class="user-badge" id="user-display">Connecting Telegram...</div>
-  </div>
+<div class="app-container">
 
-  <div class="balance-card">
-    <div class="balance-title">Verified Wallet Balance</div>
-    <div class="balance-amount" id="balance">KES 0.00</div>
-    <div style="font-size: 11px; color: #38bdf8;" id="vip-status">Account Level: Standard Free</div>
-  </div>
-
-  <div class="nav-tabs">
-    <button class="tab-btn active" onclick="switchTab('tasks-tab', this)">Tasks</button>
-    <button class="tab-btn" onclick="switchTab('vip-tab', this)">VIP Upgrade</button>
-    <button class="tab-btn" onclick="switchTab('referral-tab', this)">Referrals</button>
-    <button class="tab-btn" onclick="switchTab('payout-tab', this)">Payouts</button>
-  </div>
-
-  <!-- Tab 1: Dynamic Tasks Engine -->
-  <div class="tab-content active" id="tasks-tab">
-    <div id="tasks-container">Loading available tasks...</div>
-  </div>
-
-  <!-- Tab 2: VIP Subscription & M-Pesa Deposit -->
-  <div class="tab-content" id="vip-tab">
-    <div class="card">
-      <h3 style="color: #eab308; margin-bottom: 6px;">Upgrade to LipaViews VIP</h3>
-      <p style="font-size: 12px; color: #94a3b8; margin-bottom: 10px;">Unlock 2x reward multipliers on watch tasks and priority Sunday payout processing.</p>
-      <label style="font-size: 11px; color: #cbd5e1;">M-Pesa Transaction Receipt:</label>
-      <input type="text" class="input-field" id="vip-receipt" placeholder="e.g. QKH89XX12">
-      <button class="btn btn-success" onclick="submitVIPDeposit()">Submit KES 200 VIP Upgrade</button>
-    </div>
-  </div>
-
-  <!-- Tab 3: Referrals & Link Generation -->
-  <div class="tab-content" id="referral-tab">
-    <div class="card">
-      <h3 style="margin-bottom: 6px;">Invite Friends & Earn</h3>
-      <p style="font-size: 12px; color: #94a3b8; margin-bottom: 10px;">Earn KES 5.00 instantly for every user who joins via your referral link.</p>
-      <input type="text" class="input-field" id="ref-link" readonly value="https://t.me/LipaViewsBot">
-      <button class="btn" onclick="copyRefLink()">Copy Referral Link</button>
-    </div>
-  </div>
-
-  <!-- Tab 4: Automated Sunday Payout Engine -->
-  <div class="tab-content" id="payout-tab">
-    <div class="card">
-      <h3 style="margin-bottom: 6px;">Request Sunday Payout</h3>
-      <p style="font-size: 12px; color: #94a3b8; margin-bottom: 10px;">Payouts are processed automatically every Sunday directly to your registered mobile wallet (Min threshold: KES 100.00).</p>
-      <button class="btn btn-success" onclick="requestPayout()">Request Cash Out</button>
-    </div>
-  </div>
-
-  <script>
-    const tg = window.Telegram.WebApp;
-    tg.ready();
-    tg.expand();
-
-    let currentUser = { telegram_id: 12345678, username: 'WebUser' };
-    if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-      currentUser.telegram_id = tg.initDataUnsafe.user.id;
-      currentUser.username = tg.initDataUnsafe.user.username || tg.initDataUnsafe.user.first_name;
-    }
-
-    document.getElementById('user-display').innerText = "@" + currentUser.username + " (ID: " + currentUser.telegram_id + ")";
-    document.getElementById('ref-link').value = "https://t.me/LipaViewsBot?start=ref_" + currentUser.telegram_id;
-
-    async function syncUser() {
-      try {
-        const res = await fetch('/api/sync-user', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify(currentUser)
-        });
-        const data = await res.json();
-        if (data.user) {
-          document.getElementById('balance').innerText = "KES " + parseFloat(data.user.balance).toFixed(2);
-          if (data.user.is_vip) document.getElementById('vip-status').innerText = "Account Level: VIP Member";
-        }
-      } catch(e) { console.error(e); }
-    }
-
-    async function loadTasks() {
-      const container = document.getElementById('tasks-container');
-      try {
-        const res = await fetch('/api/tasks?telegram_id=' + currentUser.telegram_id);
-        const data = await res.json();
-        
-        container.innerHTML = '';
-        data.tasks.forEach(task => {
-          const card = document.createElement('div');
-          card.className = 'card';
-          card.innerHTML = `
-            <div class="video-container">
-              <iframe src="${task.video_url}?enablejsapi=1"></iframe>
+    <!-- LOGIN -->
+    <div id="auth-screen">
+        <div class="auth-card">
+            <h2>LipaViews Login</h2>
+            <p>Enter your details to access your account.</p>
+            <div class="input-group">
+                <label>Official Full Name</label>
+                <input type="text" id="auth-name" placeholder="e.g. Ezra Wanyama">
             </div>
-            <div style="font-weight: bold; font-size: 14px; margin-bottom: 4px;">${task.title}</div>
-            <div style="font-size: 12px; color: #94a3b8; margin-bottom: 8px;">Reward: <b style="color:#4ade80;">KES ${parseFloat(task.reward_kes).toFixed(2)}</b> | Time: ${task.duration_sec}s</div>
-            <div class="timer-bar"><div class="timer-fill" id="timer-${task.id}"></div></div>
-            <button class="btn" id="btn-${task.id}" ${task.completed ? 'disabled' : ''} onclick="startWatchTask(${task.id}, ${task.duration_sec})">
-              ${task.completed ? 'Completed ✓' : 'Watch & Earn'}
-            </button>
-          `;
-          container.appendChild(card);
-        });
-      } catch(e) { container.innerHTML = 'Error loading tasks.'; }
+            <div class="input-group">
+                <label>M-Pesa Phone Number</label>
+                <input type="tel" id="auth-phone" placeholder="e.g. 0712345678">
+            </div>
+            <button class="btn-glow" onclick="handleLogin()">Access My Dashboard</button>
+        </div>
+    </div>
+
+    <!-- MAIN DASHBOARD -->
+    <div id="main-app">
+        <div class="top-bar">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <div class="avatar" id="avatar-initial">E</div>
+                <div>
+                    <div style="font-size: 14px; font-weight: bold;" id="user-display-name">User Name</div>
+                    <span style="font-size:10px; color:#38bdf8; font-weight:bold;" id="user-tier-badge">FREE TIER</span>
+                </div>
+            </div>
+            <button onclick="logout()" style="background:none; border:none; color:var(--text-muted); font-size:12px; cursor:pointer;"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+        </div>
+
+        <!-- BALANCE CARD -->
+        <div class="balance-card">
+            <div style="font-size: 12px; color: #ff8800; font-weight: bold;"><i class="fa-solid fa-wallet"></i> Total Earnings</div>
+            <div class="balance-amount" id="user-balance">KES 0.00</div>
+            <div style="font-size:11px; color:var(--text-muted); margin-bottom:8px;" id="views-counter-text">Watched Today: 0 videos</div>
+            <div class="action-row">
+                <div class="action-btn" onclick="openWithdrawModal()"><i class="fa-solid fa-paper-plane"></i> Withdraw</div>
+                <div class="action-btn" onclick="openDepositInfo()"><i class="fa-solid fa-circle-arrow-up"></i> Upgrade Tier</div>
+            </div>
+        </div>
+
+        <!-- ACTIVE WATCH TASK -->
+        <div class="video-card">
+            <div style="font-size: 14px; font-weight: bold; margin-bottom: 10px;"><i class="fa-solid fa-circle-play" style="color:#ff8800;"></i> Active Task Queue</div>
+            <div id="task-area">
+                <div class="video-container" id="video-frame">
+                    <div style="display:flex; height:100%; align-items:center; justify-content:center; color:var(--text-muted);">
+                        Loading active task...
+                    </div>
+                </div>
+                <h4 id="task-title" style="font-size: 13px; margin-bottom:4px;">Task Title Loading...</h4>
+                <p id="task-desc" style="font-size: 11px; color:var(--text-muted); margin-bottom:10px;"></p>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span id="task-reward" style="font-size: 12px; color:#ff8800; font-weight:bold;">Reward: KES 0.00</span>
+                    <button id="claim-btn" class="btn-glow btn-disabled" style="width:auto; padding: 8px 16px; font-size:12px;" disabled onclick="claimReward()">Watch 20s to Claim</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TIERS INFO -->
+        <div style="font-size: 14px; font-weight: bold; margin-bottom: 10px;"><i class="fa-solid fa-layer-group" style="color:#38bdf8;"></i> Subscription Packages</div>
+        <div class="tiers-grid">
+            <div class="tier-item">
+                <div>
+                    <h4 style="font-size:13px;">Free Tier</h4>
+                    <p style="font-size:11px; color:var(--text-muted);">10 Videos/Day | KES 2.00 / view</p>
+                </div>
+                <span style="font-size:12px; font-weight:bold; color:#38bdf8;">KES 0</span>
+            </div>
+            <div class="tier-item">
+                <div>
+                    <h4 style="font-size:13px;">Pro 1 Tier</h4>
+                    <p style="font-size:11px; color:var(--text-muted);">100 Videos/Day | KES 10.00 / view</p>
+                </div>
+                <span style="font-size:12px; font-weight:bold; color:#ff8800;">KES 100</span>
+            </div>
+            <div class="tier-item">
+                <div>
+                    <h4 style="font-size:13px;">Pro 2 Tier</h4>
+                    <p style="font-size:11px; color:var(--text-muted);">Unlimited Videos | KES 20.00 / view</p>
+                </div>
+                <span style="font-size:12px; font-weight:bold; color:#a855f7;">KES 200</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- WITHDRAWAL MODAL -->
+    <div class="modal" id="withdraw-modal">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 8px; font-size: 16px;">Withdraw Earnings</h3>
+            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px;">Minimum cashout limit is KES 130.00.</p>
+            <div class="input-group">
+                <label>Account Name</label>
+                <input type="text" id="w-name" readonly>
+            </div>
+            <div class="input-group">
+                <label>M-Pesa Phone Number</label>
+                <input type="text" id="w-phone" readonly>
+            </div>
+            <button class="btn-glow" style="margin-bottom:8px;" onclick="submitWithdrawal()">Confirm & Cashout</button>
+            <button class="action-btn" style="width:100%;" onclick="closeModal()">Cancel</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    if (window.Telegram && window.Telegram.WebApp) {
+        window.Telegram.WebApp.expand();
     }
 
-    let activeInterval = null;
-    function startWatchTask(taskId, duration) {
-      const btn = document.getElementById('btn-' + taskId);
-      btn.disabled = true;
-      let elapsed = 0;
-      
-      clearInterval(activeInterval);
-      activeInterval = setInterval(async () => {
-        elapsed++;
-        let pct = (elapsed / duration) * 100;
-        document.getElementById('timer-' + taskId).style.width = pct + "%";
-        btn.innerText = `Watching... (${duration - elapsed}s)`;
+    let activeUserPhone = localStorage.getItem('lipa_user_phone');
+    let activeUser = null;
+    let activeTask = null;
+    let timerInterval = null;
+    let watchTimeLeft = 20;
 
-        if (elapsed >= duration) {
-          clearInterval(activeInterval);
-          btn.innerText = "Verifying...";
-          const res = await fetch('/api/claim-reward', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ telegram_id: currentUser.telegram_id, task_id: taskId, watch_time_sec: elapsed })
-          });
-          const result = await res.json();
-          if (res.ok) {
-            alert(result.message);
-            document.getElementById('balance').innerText = "KES " + result.new_balance.toFixed(2);
-            btn.innerText = "Completed ✓";
-          } else {
-            alert("Error: " + result.error);
-            btn.innerText = "Watch & Earn";
-            btn.disabled = false;
-          }
+    window.onload = function() {
+        if (activeUserPhone) {
+            fetchUserData(activeUserPhone);
         }
-      }, 1000);
+    };
+
+    async function handleLogin() {
+        const name = document.getElementById('auth-name').value;
+        const phone = document.getElementById('auth-phone').value;
+
+        if (!name || !phone) {
+            alert("Please enter your official full name and M-Pesa phone number.");
+            return;
+        }
+
+        const res = await fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ full_name: name, phone_number: phone })
+        });
+
+        const data = await res.json();
+        if (data.status === 'success') {
+            localStorage.setItem('lipa_user_phone', phone);
+            activeUserPhone = phone;
+            updateUserUI(data.user);
+            loadNextTask();
+        }
     }
 
-    function switchTab(tabId, btn) {
-      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.getElementById(tabId).classList.add('active');
-      btn.classList.add('active');
+    async function fetchUserData(phone) {
+        const res = await fetch(`/api/user-data?phone_number=${phone}`);
+        if (res.ok) {
+            const user = await res.json();
+            updateUserUI(user);
+            loadNextTask();
+        } else {
+            logout();
+        }
     }
 
-    async function submitVIPDeposit() {
-      const receipt = document.getElementById('vip-receipt').value.trim();
-      if (!receipt) return alert("Enter receipt code");
-      const res = await fetch('/api/deposit-request', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ telegram_id: currentUser.telegram_id, mpesa_receipt: receipt, amount: 200, type: 'vip_upgrade' })
-      });
-      const data = await res.json();
-      alert(data.message);
+    function updateUserUI(user) {
+        activeUser = user;
+        document.getElementById('auth-screen').style.display = 'none';
+        document.getElementById('main-app').style.display = 'block';
+
+        document.getElementById('user-display-name').innerText = user.full_name;
+        document.getElementById('avatar-initial').innerText = user.full_name[0].toUpperCase();
+        document.getElementById('user-tier-badge').innerText = user.pro_tier.toUpperCase() + ' TIER';
+        document.getElementById('user-balance').innerText = `KES ${parseFloat(user.balance).toFixed(2)}`;
+        
+        const limits = { 'free': '10', 'pro1': '100', 'pro2': 'Unlimited' };
+        document.getElementById('views-counter-text').innerText = `Watched Today: ${user.videos_watched_today} / ${limits[user.pro_tier]} videos`;
     }
 
-    async function requestPayout() {
-      const res = await fetch('/api/request-payout', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ telegram_id: currentUser.telegram_id })
-      });
-      const data = await res.json();
-      alert(data.message || data.error);
-      syncUser();
+    function formatEmbedUrl(url) {
+        if (!url) return '';
+        if (url.includes('instagram.com/reel/') || url.includes('instagram.com/p/')) {
+            let cleanUrl = url.split('?')[0];
+            if (!cleanUrl.endsWith('/')) cleanUrl += '/';
+            return cleanUrl + 'embed/';
+        }
+        if (url.includes('youtube.com/watch?v=')) {
+            return url.replace('watch?v=', 'embed/');
+        }
+        if (url.includes('youtu.be/')) {
+            let id = url.split('youtu.be/')[1].split('?')[0];
+            return `https://www.youtube.com/embed/${id}`;
+        }
+        return url;
     }
 
-    function copyRefLink() {
-      const input = document.getElementById('ref-link');
-      input.select();
-      document.execCommand('copy');
-      alert("Referral link copied!");
+    async function loadNextTask() {
+        if (timerInterval) clearInterval(timerInterval);
+
+        const res = await fetch(`/api/next-task?phone_number=${activeUserPhone}`);
+        const data = await res.json();
+
+        if (data.limit_reached) {
+            document.getElementById('task-area').innerHTML = `<div style="text-align:center; padding:20px; color:#ff8800;">${data.message}</div>`;
+            return;
+        }
+
+        if (data.task) {
+            activeTask = data.task;
+            document.getElementById('task-title').innerText = data.task.title;
+            document.getElementById('task-desc').innerText = data.task.description || '';
+            document.getElementById('task-reward').innerText = `Reward: KES ${parseFloat(data.task.reward_kes).toFixed(2)}`;
+            
+            const embedUrl = formatEmbedUrl(data.task.video_url);
+            document.getElementById('video-frame').innerHTML = `<iframe src="${embedUrl}" allowfullscreen scrolling="no"></iframe>`;
+            
+            startWatchTimer();
+        } else {
+            document.getElementById('task-area').innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-muted);">No more videos available today! Check back later.</div>`;
+        }
     }
 
-    syncUser();
-    loadTasks();
-  </script>
+    function startWatchTimer() {
+        watchTimeLeft = 20;
+        const btn = document.getElementById('claim-btn');
+        btn.disabled = true;
+        btn.classList.add('btn-disabled');
+        btn.innerText = `Watch (${watchTimeLeft}s)`;
+
+        timerInterval = setInterval(() => {
+            watchTimeLeft--;
+            if (watchTimeLeft > 0) {
+                btn.innerText = `Watch (${watchTimeLeft}s)`;
+            } else {
+                clearInterval(timerInterval);
+                btn.disabled = false;
+                btn.classList.remove('btn-disabled');
+                btn.innerText = 'Claim Reward';
+            }
+        }, 1000);
+    }
+
+    async function claimReward() {
+        if (!activeTask || watchTimeLeft > 0) return;
+
+        const res = await fetch('/api/claim-reward', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone_number: activeUserPhone, task_id: activeTask.id })
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+            alert(data.message);
+            fetchUserData(activeUserPhone);
+        } else {
+            alert(data.error);
+        }
+    }
+
+    function openWithdrawModal() {
+        if (!activeUser) return;
+        document.getElementById('w-name').value = activeUser.full_name;
+        document.getElementById('w-phone').value = activeUser.phone_number;
+        document.getElementById('withdraw-modal').style.display = 'flex';
+    }
+    
+    function closeModal() { document.getElementById('withdraw-modal').style.display = 'none'; }
+
+    function openDepositInfo() {
+        alert("To upgrade your plan, send payment to Paybill: 501101, Account: 00001. The admin will approve your package updates.");
+    }
+
+    async function submitWithdrawal() {
+        const res = await fetch('/api/withdraw', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone_number: activeUserPhone })
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+            alert(data.message);
+            closeModal();
+            fetchUserData(activeUserPhone);
+        } else {
+            alert(data.error);
+        }
+    }
+
+    function logout() {
+        localStorage.removeItem('lipa_user_phone');
+        location.reload();
+    }
+</script>
 </body>
 </html>

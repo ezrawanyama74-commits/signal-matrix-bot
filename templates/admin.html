@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>LipaViews Management Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+        body { background-color: #0a0e17; color: white; padding: 16px; }
+        h1 { color: #38bdf8; margin-bottom: 16px; font-size: 20px; }
+        h2 { color: #38bdf8; margin-bottom: 12px; font-size: 16px; }
+        .card { background: #141c2e; border: 1px solid #222f47; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+        input, select, textarea { width: 100%; padding: 10px; margin-bottom: 10px; background: #0d131f; border: 1px solid #222f47; color: white; border-radius: 6px; outline: none; }
+        button { background: #ff6b00; color: white; border: none; padding: 10px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; width: 100%; }
+        
+        .table-responsive { width: 100%; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 8px; min-width: 500px; }
+        th, td { border: 1px solid #222f47; padding: 8px; text-align: left; font-size: 12px; }
+        th { background: #0d131f; color: #38bdf8; }
+        select { margin-bottom: 0; padding: 6px; font-size: 11px; }
+    </style>
+</head>
+<body>
+
+    <h1>LipaViews Control Panel</h1>
+
+    <!-- ADD VIDEO TASK -->
+    <div class="card">
+        <h2><i class="fa-solid fa-video"></i> Add Video Task</h2>
+        <input type="text" id="v-title" placeholder="Video Title">
+        <input type="text" id="v-url" placeholder="Video Link (YouTube or Instagram Reel)">
+        <textarea id="v-desc" placeholder="Video Description (Optional)"></textarea>
+        <input type="number" id="v-views" placeholder="Max View Limit (e.g. 100)" value="100">
+        <button onclick="addVideo()">Publish Video Task</button>
+    </div>
+
+    <!-- REGISTERED USERS -->
+    <div class="card">
+        <h2><i class="fa-solid fa-users"></i> Registered Users</h2>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Full Name</th>
+                        <th>Phone</th>
+                        <th>Balance</th>
+                        <th>Tier</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="user-table-body">
+                    <tr><td colspan="5" style="text-align:center; color:#8a99ad;">Fetching users...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- WITHDRAWALS -->
+    <div class="card">
+        <h2><i class="fa-solid fa-money-bill-transfer"></i> Withdrawal Requests</h2>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Full Name</th>
+                        <th>Phone</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="withdraw-table-body">
+                    <tr><td colspan="4" style="text-align:center; color:#8a99ad;">No requests yet.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+<script>
+    async function loadAdminData() {
+        try {
+            const res = await fetch('/api/admin/data');
+            if (!res.ok) throw new Error("Server error fetching admin data");
+            const data = await res.json();
+
+            const uBody = document.getElementById('user-table-body');
+            if (!data.users || data.users.length === 0) {
+                uBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#8a99ad;">No users registered yet. Login at / first!</td></tr>';
+            } else {
+                uBody.innerHTML = '';
+                data.users.forEach(u => {
+                    uBody.innerHTML += `
+                        <tr>
+                            <td><b>${u.full_name}</b></td>
+                            <td>${u.phone_number}</td>
+                            <td>KES ${u.balance.toFixed(2)}</td>
+                            <td><b style="color:#ff8800;">${u.pro_tier.toUpperCase()}</b></td>
+                            <td>
+                                <select onchange="updateTier(${u.id}, this.value)">
+                                    <option value="">Select Tier...</option>
+                                    <option value="free">Free Tier</option>
+                                    <option value="pro1">Pro 1 Tier</option>
+                                    <option value="pro2">Pro 2 Tier</option>
+                                </select>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+
+            const wBody = document.getElementById('withdraw-table-body');
+            if (!data.withdrawals || data.withdrawals.length === 0) {
+                wBody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#8a99ad;">No pending withdrawals.</td></tr>';
+            } else {
+                wBody.innerHTML = '';
+                data.withdrawals.forEach(w => {
+                    wBody.innerHTML += `
+                        <tr>
+                            <td><b>${w.full_name}</b></td>
+                            <td><b>${w.phone_number}</b></td>
+                            <td style="color:#00dfa2; font-weight:bold;">KES ${w.amount.toFixed(2)}</td>
+                            <td>${w.status.toUpperCase()}</td>
+                        </tr>
+                    `;
+                });
+            }
+        } catch (e) {
+            console.error(e);
+            document.getElementById('user-table-body').innerHTML = `<tr><td colspan="5" style="text-align:center; color:#ff6b00;">Error loading users. Check terminal logs.</td></tr>`;
+        }
+    }
+
+    async function addVideo() {
+        const title = document.getElementById('v-title').value;
+        const url = document.getElementById('v-url').value;
+        const desc = document.getElementById('v-desc').value;
+        const views = document.getElementById('v-views').value;
+
+        if (!title || !url) {
+            alert("Title and URL are required.");
+            return;
+        }
+
+        await fetch('/api/admin/add-video', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title, video_url: url, description: desc, max_views: views })
+        });
+
+        alert("Video Published!");
+        document.getElementById('v-title').value = '';
+        document.getElementById('v-url').value = '';
+        document.getElementById('v-desc').value = '';
+        loadAdminData();
+    }
+
+    async function updateTier(userId, tier) {
+        if (!tier) return;
+        const res = await fetch('/api/admin/update-tier', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: userId, pro_tier: tier })
+        });
+        if (res.ok) {
+            alert("Tier updated successfully!");
+            loadAdminData();
+        }
+    }
+
+    window.onload = () => {
+        loadAdminData();
+        setInterval(loadAdminData, 4000);
+    };
+</script>
+</body>
+</html>
